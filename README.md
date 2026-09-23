@@ -6,4 +6,6 @@
 
 テスト: `node --test test-validator.js`
 
+動作確認用に`sample-invalid.csv`を同梱しています。画面で選ぶと、handleの空白・価格・Statusの3件が表示されます。
+
 制作: たく｜製造業DX・AI。毎回のCSV変換を専用ツールにしたい場合は[ココナラの相談窓口](https://coconala.com/services/4415018)をご利用ください。自主制作であり、Shopify社とは無関係です。
