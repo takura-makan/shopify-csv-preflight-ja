@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Shopify商品CSV 取込前チェック｜たく</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; color: #17241f; background: #f3f7f4; }
+    body { max-width: 760px; margin: 0 auto; padding: 24px 16px 60px; }
+    h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.25; }
+    .box { background: white; border: 1px solid #d5e1d9; border-radius: 14px; padding: 20px; margin: 18px 0; }
+    p, li { line-height: 1.7; }
+    label { display: block; font-weight: 700; margin: 15px 0 6px; }
+    input, select { font: inherit; max-width: 100%; }
+    button { background: #006b45; color: white; border: 0; border-radius: 8px; padding: 12px 18px; font: inherit; font-weight: 700; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: default; }
+    .muted { color: #516158; font-size: .93rem; }
+    .error { border-left: 4px solid #ad2831; }
+    .warning { border-left: 4px solid #ba7900; }
+    .issue { padding: 8px 12px; margin: 9px 0; background: #f8faf9; }
+    a { color: #005c94; }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="muted">無料・ブラウザ内で実行</p>
+    <h1>Shopify商品CSV<br>取込前チェック</h1>
+    <p>商品CSVの列数、必須列、URL handle、価格・Statusの表記を点検します。ファイルは外部へ送信しません。</p>
+  </header>
+  <main>
+    <section class="box">
+      <label for="mode">目的</label>
+      <select id="mode"><option value="new">新規商品を登録</option><option value="update">既存商品を更新</option></select>
+      <label for="file">UTF-8のCSVファイル</label>
+      <input id="file" type="file" accept=".csv,text/csv">
+      <p class="muted">個人情報の入ったCSVでもブラウザ外には送信しません。読み込み前にバックアップを保存してください。</p>
+      <button id="run" type="button">チェックする</button>
+    </section>
+    <section id="result" class="box" aria-live="polite" hidden></section>
+    <section class="box">
+      <h2>このチェックで分かること</h2>
+      <ul><li>CSVの引用符・列数の崩れ</li><li>TitleとURL handleの不足</li><li>URL handleの空白、価格・Statusの表記候補</li></ul>
+      <p>これは取込前の簡易点検です。Shopifyへの実際の取込成功、既存商品との競合、画像URL、全項目の妥当性までは保証しません。Shopifyの<a href="https://help.shopify.com/ja/manual/products/import-export/using-csv">公式CSV仕様</a>と<a href="https://help.shopify.com/ja/manual/products/import-export/common-import-issues">エラー対処</a>も確認してください。</p>
+      <p>毎回同じ列変換や件数照合が必要な場合は、<a href="https://coconala.com/services/4415018">CSV専用ツール制作の相談窓口</a>があります。仕様を見て対応可否を判断します。</p>
+    </section>
+  </main>
+  <script src="validator.js"></script>
+  <script>
+    const fileInput = document.getElementById("file");
+    const run = document.getElementById("run");
+    const result = document.getElementById("result");
+    run.addEventListener("click", async () => {
+      result.hidden = false;
+      result.replaceChildren();
+      const file = fileInput.files[0];
+      if (!file) { result.textContent = "CSVファイルを選んでください。"; return; }
+      try {
+        const text = new TextDecoder("utf-8", { fatal: true }).decode(await file.arrayBuffer());
+        const report = ShopifyCsvChecker.check(text, document.getElementById("mode").value);
+        const h = document.createElement("h2");
+        h.textContent = `確認結果：${report.dataRows}行・${report.columns}列`;
+        result.append(h);
+        if (!report.issues.length) {
+          const p = document.createElement("p");
+          p.textContent = "この簡易チェックでは指摘はありません。Shopifyへの取り込み結果も確認してください。";
+          result.append(p);
+        }
+        for (const issue of report.issues) {
+          const p = document.createElement("p");
+          p.className = `issue ${issue.severity}`;
+          p.textContent = `${issue.severity === "error" ? "要修正" : "要確認"}｜${issue.record}行目：${issue.message}`;
+          result.append(p);
+        }
+      } catch (error) {
+        result.textContent = error instanceof TypeError ? "UTF-8として読めません。文字コードを確認してください。" : error.message;
+      }
+    });
+  </script>
+</body>
+</html>
