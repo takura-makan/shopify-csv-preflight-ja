@@ -54,6 +54,7 @@
       result.replaceChildren();
       const file = fileInput.files[0];
       if (!file) { result.textContent = "CSVファイルを選んでください。"; return; }
+      if (file.size > 5 * 1024 * 1024) { result.textContent = "5MB以下のCSVを選んでください。"; return; }
       try {
         const text = new TextDecoder("utf-8", { fatal: true }).decode(await file.arrayBuffer());
         const report = ShopifyCsvChecker.check(text, document.getElementById("mode").value);
@@ -65,10 +66,15 @@
           p.textContent = "この簡易チェックでは指摘はありません。Shopifyへの取り込み結果も確認してください。";
           result.append(p);
         }
-        for (const issue of report.issues) {
+        for (const issue of report.issues.slice(0, 200)) {
           const p = document.createElement("p");
           p.className = `issue ${issue.severity}`;
           p.textContent = `${issue.severity === "error" ? "要修正" : "要確認"}｜${issue.record}行目：${issue.message}`;
+          result.append(p);
+        }
+        if (report.issues.length > 200) {
+          const p = document.createElement("p");
+          p.textContent = `指摘は計${report.issues.length}件です。画面には先頭200件を表示しています。`;
           result.append(p);
         }
       } catch (error) {

@@ -17,3 +17,6 @@ test("status and price are checked without altering data", () => {
   const issues = check("Title,Price,Status\nA,abc,pending").issues;
   assert.equal(issues.length, 2);
 });
+test("new product variant needs a handle", () => {
+  assert.match(check("Title,Option1 name,Option1 value\nShirt,Size,S").issues[0].message, /URL handle/);
+});

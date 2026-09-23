@@ -88,6 +88,7 @@
       const sku = value(skuCol);
       const optionValue = value(optionValueCol);
       if (mode === "update" && !handle) add("error", rec, "更新対象のURL handleが空です");
+      if (mode === "new" && optionValue && !handle) add("error", rec, "バリエーション行にはURL handleが必要です");
       if (handle && /\s/.test(handle)) add("error", rec, "URL handleに空白があります");
       if (handle) {
         if (!products.has(handle)) products.set(handle, { title: false, records: [] });
